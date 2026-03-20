@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * ROCKNIX joypad driver
+ * ARCH-R joypad driver
  *
  * Copyright (C) 2024 ROCKNIX (https://github.com/ROCKNIX)
+ * Copyright (C) 2026 ARCH-R (https://github.com/archr-linux/ArchR/)
  */
 
 #define SARADC_CH0      0

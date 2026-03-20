@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * ROCKNIX joypad driver
+ * ARCH-R joypad driver
  *
  * Copyright (C) 2024 ROCKNIX (https://github.com/ROCKNIX)
+ * Copyright (C) 2026 ARCH-R (https://github.com/archr-linux/ArchR/)
  */
 
 /*----------------------------------------------------------------------------*/
@@ -16,10 +17,10 @@
 #else
 #include <linux/of_gpio_legacy.h>
 #endif
-#include "rocknix-joypad.h"
+#include "archr-joypad.h"
 
 /*----------------------------------------------------------------------------*/
-#define DRV_NAME "rocknix-joypad"
+#define DRV_NAME "archr-joypad"
 
 /*----------------------------------------------------------------------------*/
 
@@ -637,7 +638,7 @@ static int joypad_probe(struct platform_device *pdev)
 
 /*----------------------------------------------------------------------------*/
 static const struct of_device_id joypad_of_match[] = {
-	{ .compatible = "rocknix-joypad", },
+	{ .compatible = "archr-joypad", },
 	{},
 };
 
@@ -670,7 +671,7 @@ module_exit(joypad_exit);
 
 /*----------------------------------------------------------------------------*/
 MODULE_AUTHOR("ROCKNIX");
-MODULE_DESCRIPTION("ROCKNIX joypad driver");
+MODULE_DESCRIPTION("ARCH-R joypad driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:" DRV_NAME);
 MODULE_INFO(intree, "Y");
