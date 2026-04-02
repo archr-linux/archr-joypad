@@ -639,6 +639,7 @@ static int joypad_probe(struct platform_device *pdev)
 /*----------------------------------------------------------------------------*/
 static const struct of_device_id joypad_of_match[] = {
 	{ .compatible = "archr-joypad", },
+	{ .compatible = "odroidgo3-joypad", },
 	{},
 };
 
