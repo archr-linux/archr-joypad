@@ -59,6 +59,9 @@ struct bt_adc {
 	int amux_ch;
 	/* adc data tuning value([percent), p = positive, n = negative */
 	int tuning_p, tuning_n;
+	/* runtime calibration (archr-joypad-cal.h) */
+	int raw, open_cal, deadzone, dt_tuning_p, dt_tuning_n;
+	bool cal_fixed;
 };
 
 struct analog_mux {
@@ -234,6 +237,9 @@ struct joypad {
 	unsigned long last_data_jiffies;
 
 };
+
+#define ARCHR_CAL_COUNT(j)	((j)->amux_count)
+#include "archr-joypad-cal.h"
 
 extern struct input_dev * joypad_input_g;
 
@@ -430,6 +436,7 @@ static void joypad_adc_check(struct input_polled_dev *poll_dev)
 			//dev_err(joypad->dev, "%s : saradc channels[%d]! adc->value : %d\n",__func__, nbtn, adc->value);
 			continue;
 		}
+		adcx->raw = adcx->value;
 		adcx->value = adcx->value - adcx->cal;
 
 		/* Read second joystick axis */
@@ -438,21 +445,22 @@ static void joypad_adc_check(struct input_polled_dev *poll_dev)
 			//dev_err(joypad->dev, "%s : saradc channels[%d]! adc->value : %d\n",__func__, nbtn, adc->value);
 			continue;
 		}
+		adcy->raw = adcy->value;
 		adcy->value = adcy->value - adcy->cal;
 
 		/* Scaled Radial Deadzone */
 		/* https://web.archive.org/web/20190129113357/http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html */
 		mag = int_sqrt((adcx->value * adcx->value) + (adcy->value * adcy->value));
-		if (joypad->bt_adc_deadzone) {
-			if (mag <= joypad->bt_adc_deadzone) {
+		if (adcx->deadzone) {
+			if (mag <= adcx->deadzone) {
 				adcx->value = 0;
 				adcy->value = 0;
 			}
 			else {
 				/* Assumes adcx->max == -adcx->min == adcy->max == -adcy->min */
 				/* Order of operations is critical to avoid integer overflow */
-				adcx->value = (((adcx->max * adcx->value) / mag) * (mag - joypad->bt_adc_deadzone)) / (adcx->max - joypad->bt_adc_deadzone);
-				adcy->value = (((adcy->max * adcy->value) / mag) * (mag - joypad->bt_adc_deadzone)) / (adcy->max - joypad->bt_adc_deadzone);
+				adcx->value = (((adcx->max * adcx->value) / mag) * (mag - adcx->deadzone)) / (adcx->max - adcx->deadzone);
+				adcy->value = (((adcy->max * adcy->value) / mag) * (mag - adcx->deadzone)) / (adcy->max - adcx->deadzone);
 			}
 		}
 
@@ -542,7 +550,7 @@ static void joypad_open(struct input_polled_dev *poll_dev)
 				__func__, nbtn);
 			continue;
 		}
-		adc->cal = adc->value;
+		archr_cal_opened(adc, adc->value);
 	}
 	/* buttons status sync */
 	joypad_adc_check(poll_dev);
@@ -1419,6 +1427,12 @@ static int joypad_probe(struct platform_device *pdev)
 
 	mutex_init(&joypad->lock);
 	platform_set_drvdata(pdev, joypad);
+
+	/* runtime analog calibration (archr-joypad-cal.h) */
+	archr_cal_init(joypad);
+	error = devm_device_add_group(dev, &archr_cal_attr_group);
+	if (error)
+		dev_warn(dev, "calibration sysfs failed (%d)\n", error);
 
 	/* poll input device setup */
 	error = joypad_input_setup(dev, joypad);
